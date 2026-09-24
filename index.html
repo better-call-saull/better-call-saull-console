@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Better Call Saull 财税法工作台</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A2342'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='15' font-weight='600' fill='%23D9BE7F' text-anchor='middle'%3E%E8%B4%A2%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0A2342">
+</head>
+<body>
+<noscript><div class="nojs"><b>本台需要启用 JavaScript。</b><span>工作台为静态单页应用，视图由本地引擎渲染。未启用时，全部数字与结论以仓库 data.js 为准。</span></div></noscript>
+<div class="app">
+
+  <!-- ================= 左侧目录 ================= -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="seal">财</div>
+      <h1>财税法工作台</h1>
+      <div class="en">BCS FIN · TAX · LAW DESK</div>
+    </div>
+
+    <nav class="sb-nav" id="nav">
+      <div class="sb-group">总览 Overview</div>
+      <a href="#/overview" data-v="overview"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.6" y="2.6" width="4.6" height="4.6"/><rect x="8.8" y="2.6" width="4.6" height="4.6"/><rect x="2.6" y="8.8" width="4.6" height="4.6"/><rect x="8.8" y="8.8" width="4.6" height="4.6"/></svg></span>工作台总览<span class="cnt">KPIs</span></a>
+
+      <div class="sb-group">财 Finance</div>
+      <a href="#/ledger" data-v="ledger"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.8h8.6a1.4 1.4 0 0 1 1.4 1.4v9H4.4A1.4 1.4 0 0 1 3 11.8z"/><path d="M3 11.8a1.4 1.4 0 0 1 1.4-1.4h8.6v2.8H4.4"/><path d="M5.6 5.4h4.8M5.6 7.4h3.2"/></svg></span>自动记账<span class="cnt">AI</span></a>
+      <a href="#/cashflow" data-v="cashflow"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5h11"/><path d="M4.75 13.5V9.8M8 13.5V4.8M11.25 13.5V7.6"/></svg></span>现金流<span class="cnt">12周</span></a>
+      <a href="#/arap" data-v="arap"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.8 5.4h10.4M11.2 3l2.4 2.4-2.4 2.4"/><path d="M13.2 10.8H2.8M4.8 8.4l-2.4 2.4 2.4 2.4"/></svg></span>应收应付<span class="cnt">账龄</span></a>
+      <a href="#/budget" data-v="budget"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8"/><path d="M5.2 10.8V7.2M8 10.8V5M10.8 10.8V8.2"/></svg></span>预算与成本<span class="cnt">9类</span></a>
+
+      <div class="sb-group">税 Tax</div>
+      <a href="#/taxcal" data-v="taxcal"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg></span>纳税日历<span class="cnt">征期</span></a>
+      <a href="#/taxburden" data-v="taxburden"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="4.9" cy="4.9" r="1.9"/><circle cx="11.1" cy="11.1" r="1.9"/><path d="M12.2 3.8L3.8 12.2"/></svg></span>税负分析<span class="cnt">6月</span></a>
+
+      <div class="sb-group">法 Legal</div>
+      <a href="#/contracts" data-v="contracts"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 2.5h6.4l3 3v8H3.4z"/><path d="M9.8 2.5v3h3"/><path d="M5.6 8h4.8M5.6 10.2h3.2"/></svg></span>合同审查<span class="cnt">AI</span></a>
+      <a href="#/regulations" data-v="regulations"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.6v10.6M5 13.4h6"/><path d="M3.4 4.6h9.2"/><path d="M3.4 4.6L2 8.2a1.9 1.9 0 0 0 2.8 0z"/><path d="M12.6 4.6L11.2 8.2a1.9 1.9 0 0 0 2.8 0z"/></svg></span>法规库<span class="cnt" id="navRegCnt">196</span></a>
+
+      <div class="sb-group">守底线 Compliance</div>
+      <a href="#/alerts" data-v="alerts"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.3a4.3 4.3 0 0 1 2.5 7.8v1.5h-5V10.1A4.3 4.3 0 0 1 8 2.3z"/><path d="M6.4 13.7h3.2"/></svg></span>风险预警<span class="cnt">AI</span></a>
+      <a href="#/checklist" data-v="checklist"><span class="ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.1l5 1.9v3.9c0 2.95-2 4.95-5 6.05-3-1.1-5-3.1-5-6.05V4z"/><path d="M5.9 7.85l1.5 1.5 2.7-2.95"/></svg></span>合规清单<span class="cnt">5域</span></a>
+    </nav>
+
+    <div class="sb-foot">
+      <div><b id="sbAsOf"></b></div>
+      <div id="sbAnchor">核心定位：守底线 · 保安全</div>
+      <div style="margin-top:6px;opacity:.72">只读快照，不回写业务系统</div>
+    </div>
+  </aside>
+
+  <!-- ================= 主工作区 ================= -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">BETTER CALL SAULL<span></span><b id="crumbNow">工作台总览</b></div>
+      <span class="conf">CONFIDENTIAL 内部文件</span>
+      <div class="tb-search">
+        <span class="mag"><svg viewBox="0 0 16 16" width="12" height="12" style="display:block" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <input id="gSearch" type="text" placeholder="搜索合同，法规，往来方，税种" autocomplete="off">
+        <div class="sr-pop" id="srPop"></div>
+      </div>
+      <div class="tb-clock" id="tbClock"></div>
+    </div>
+
+    <div class="view-wrap">
+      <section class="view" id="v-overview"></section>
+      <section class="view" id="v-ledger"></section>
+      <section class="view" id="v-cashflow"></section>
+      <section class="view" id="v-arap"></section>
+      <section class="view" id="v-budget"></section>
+      <section class="view" id="v-taxcal"></section>
+      <section class="view" id="v-taxburden"></section>
+      <section class="view" id="v-contracts"></section>
+      <section class="view" id="v-regulations"></section>
+      <section class="view" id="v-alerts"></section>
+      <section class="view" id="v-checklist"></section>
+
+      <div class="page-foot">
+        <div>Better Call Saull 财税法工作台，只读快照 <span class="mono" id="footAsOf"></span>。权威数据以各分区唯一真相文件为准：<span class="mono">data.js</span>，<span class="mono">better-call-saull-database/laws/</span>（法规库 196 部）</div>
+        <div class="mono">内部文件，不对外</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
