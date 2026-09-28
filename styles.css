@@ -1126,6 +1126,40 @@ table.cus-matrix{min-width:920px}
   .page-foot{flex-direction:column;gap:6px}
   .vh-meta{font-size:9.5px}
   .vh-meta .m + .m::before{margin:0 9px}
+  /* 首页仪表盘响应式 */
+  .ov-metrics-grid{grid-template-columns:1fr 1fr}
+  .ov-todo-layout{grid-template-columns:1fr}
+  .ov-todo-actions{flex-direction:row;flex-wrap:wrap}
+  .ov-risk-opc-layout{grid-template-columns:1fr}
+  .ov-health-grid{grid-template-columns:1fr 1fr}
+  .ov-ai-entry{flex-wrap:wrap}
+  .ov-ai-actions{width:100%;justify-content:flex-start}
+}
+@media (max-width:640px){
+  .kpi-strip,.g2,.g3,.g4,.do-dont{grid-template-columns:1fr}
+  .kpi{border-right:none}
+  .sb-brand{padding:8px 12px;gap:9px}
+  .sb-brand .en{display:none}
+  .sb-nav a{padding:10px 11px;font-size:11.5px}
+  .view-head h2{font-size:21px}
+  .view-head h2 .en{font-size:10px}
+  .timeline li{grid-template-columns:96px 1fr;column-gap:10px}
+  .gloss-cols{columns:1}
+  .ros-sups{grid-template-columns:1fr}
+  .cus-bar{grid-template-columns:52px minmax(0,1fr) 44px}
+  .cus-bar .tg{display:none}
+  .cus-ytd{grid-template-columns:1fr;gap:4px}
+  .conf{display:none}
+  .prov-row{grid-template-columns:1fr;row-gap:2px}
+  .prov-hd{flex-wrap:wrap}
+  /* 首页仪表盘移动端 */
+  .ov-metrics-grid{grid-template-columns:1fr}
+  .ov-metric-value{font-size:22px}
+  .ov-todo-layout{grid-template-columns:1fr}
+  .ov-risk-rings{flex-direction:column}
+  .ov-health-grid{grid-template-columns:1fr}
+  .ov-ai-entry{flex-direction:column;text-align:center}
+  .ov-ai-actions{justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){
   *,.view{animation:none!important;transition:none!important}
@@ -1186,6 +1220,16 @@ table.cus-matrix{min-width:920px}
 .sim .btn:hover{border-color:var(--deck-gold);color:var(--deck-gold)}
 .sim .btn.gold{border-color:var(--deck-gold);color:var(--deck-gold)}
 .sim .btn.gold:hover{background:rgba(217,190,127,.12)}
+/* 流水粘贴输入 */
+.flow-in{width:100%;box-sizing:border-box;background:rgba(233,239,247,.05);border:1px solid var(--deck-line);
+  color:var(--deck-ink);font-family:var(--mono);font-size:11px;line-height:1.7;padding:8px 10px;resize:vertical;
+  border-radius:0;transition:border-color .14s}
+.flow-in:focus{border-color:var(--deck-gold);outline:none}
+.flow-in::placeholder{color:var(--deck-ink-2)}
+/* 顶栏打印 */
+.tb-print{border:1px solid var(--line-2);background:var(--paper-3);padding:3.5px 9px;font-family:var(--mono);margin-left:14px;
+  font-size:10px;letter-spacing:.08em;color:var(--ink-2);cursor:pointer;border-radius:0;transition:all .14s;white-space:nowrap}
+.tb-print:hover{border-color:var(--navy);color:var(--navy)}
 /* 图表容器 */
 .chart-box{background:var(--paper-3);border:1px solid var(--line);border-top:2px solid var(--navy);padding:13px 15px 10px}
 .chart-box h4{font-family:var(--serif);font-size:13.5px;color:var(--navy-deep);margin-bottom:8px}
@@ -1202,3 +1246,181 @@ svg .ldot{fill:var(--paper-3);stroke:var(--navy-deep);stroke-width:1.4}
 svg .ldot.hot{fill:var(--gold-faint);stroke:var(--gold)}
 /* 视图头口径标签行（非"来源"语义，用 tag 而非 fchip） */
 .vh-tags{margin:10px 0 2px;display:flex;flex-wrap:wrap;gap:6px}
+
+/* ============ 首页仪表盘新版组件 ============ */
+
+/* 核心指标卡片网格 */
+.ov-metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.ov-metric{display:block;background:var(--paper-3);border:1px solid var(--line);border-top:2px solid var(--navy);padding:14px 16px;text-decoration:none;color:var(--ink);transition:all .14s}
+.ov-metric:hover{border-color:var(--navy);box-shadow:0 2px 8px rgba(19,59,102,.08)}
+.ov-metric.danger{border-top-color:var(--red)}
+.ov-metric-label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;margin-bottom:6px}
+.ov-metric-value{font-family:var(--mono);font-size:27px;font-weight:600;color:var(--navy-deep);line-height:1.2}
+.ov-metric-value small{font-size:13px;font-weight:400;color:var(--ink-2)}
+.ov-metric-sub{font-size:12px;color:var(--ink-2);margin-top:4px}
+.ov-metric-trend{font-family:var(--mono);font-size:10px;margin-top:6px;padding:2px 6px;display:inline-block}
+.ov-metric-trend.up{color:var(--green);background:rgba(12,107,74,.08)}
+.ov-metric-trend.down{color:var(--red);background:rgba(160,50,41,.08)}
+
+/* 待办事项中心 */
+.ov-todo-layout{display:grid;grid-template-columns:1fr 280px;gap:16px;margin:12px 0}
+.ov-todo-list{background:var(--paper-3);border:1px solid var(--line);padding:16px}
+.ov-todo-section{margin-bottom:14px}
+.ov-todo-section:last-child{margin-bottom:0}
+.ov-todo-header{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ov-todo-count{font-size:10px;padding:1px 6px;border-radius:2px;font-weight:600}
+.ov-todo-count.urgent{background:var(--red);color:#fff}
+.ov-todo-count.week{background:var(--gold);color:#fff}
+.ov-todo-count.overdue{background:var(--ink-3);color:#fff}
+.ov-todo-item{display:block;padding:6px 8px;font-size:12.5px;color:var(--ink);text-decoration:none;border-left:2px solid transparent;margin-bottom:4px;transition:all .14s}
+.ov-todo-item:hover{background:var(--navy-mist);border-left-color:var(--navy)}
+.ov-todo-item.urgent{border-left-color:var(--red)}
+.ov-todo-item.overdue{border-left-color:var(--ink-3);color:var(--ink-3)}
+.ov-todo-actions{display:flex;flex-direction:column;gap:12px}
+.ov-quick-actions{display:flex;flex-wrap:wrap;gap:6px}
+.ov-completion{background:var(--paper-3);border:1px solid var(--line);padding:12px}
+.ov-completion-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:6px}
+.ov-completion-text{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-top:6px}
+
+/* 风险雷达 + OPC 生存仪表盘 */
+.ov-risk-opc-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+.ov-risk-radar,.ov-opc-dashboard{background:var(--paper-3);border:1px solid var(--line);padding:16px}
+.ov-risk-radar h4,.ov-opc-dashboard h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:12px}
+.ov-risk-rings{display:flex;gap:16px;margin-bottom:14px}
+.ov-risk-ring{flex:1;text-align:center;padding:12px 8px;border:1px solid var(--line)}
+.ov-risk-ring.green{border-color:var(--green);background:rgba(12,107,74,.04)}
+.ov-risk-ring.gold{border-color:var(--gold);background:rgba(143,111,38,.04)}
+.ov-risk-ring.red{border-color:var(--red);background:rgba(160,50,41,.04)}
+.ov-risk-value{font-family:var(--mono);font-size:24px;font-weight:600;margin-bottom:4px}
+.ov-risk-ring.green .ov-risk-value{color:var(--green)}
+.ov-risk-ring.gold .ov-risk-value{color:var(--gold)}
+.ov-risk-ring.red .ov-risk-value{color:var(--red)}
+.ov-risk-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3)}
+.ov-risk-alerts{margin-bottom:10px}
+.ov-risk-alert-item{display:flex;align-items:flex-start;gap:6px;padding:6px 0;font-size:12px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.ov-risk-alert-item:hover{color:var(--navy)}
+.ov-risk-alert-text{flex:1}
+.ov-opc-item{padding:10px 0;border-bottom:1px solid var(--line)}
+.ov-opc-item:last-child{border-bottom:none}
+.ov-opc-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:4px}
+.ov-opc-score{font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:6px}
+.ov-opc-score.green{color:var(--green)}
+.ov-opc-score.gold{color:var(--gold)}
+.ov-opc-score.red{color:var(--red)}
+.ov-opc-value{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--navy-deep);margin-bottom:4px}
+.ov-opc-countdown{font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.ov-opc-countdown strong{color:var(--red);font-size:14px}
+.ov-opc-next{font-size:13px;color:var(--ink);margin-bottom:2px}
+.ov-opc-deadline{font-family:var(--mono);font-size:12px;color:var(--gold);margin-bottom:4px}
+.ov-opc-sub{font-size:11px;color:var(--ink-3)}
+.ov-opc-sub a{color:var(--navy);font-size:11px}
+
+/* 经营健康度 */
+.ov-health-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0}
+.ov-health-card{background:var(--paper-3);border:1px solid var(--line);border-top:2px solid var(--navy);padding:14px}
+.ov-health-card h4{font-family:var(--serif);font-size:13px;color:var(--navy-deep);margin-bottom:10px}
+.ov-health-chart{margin-bottom:10px}
+.ov-mini-chart{width:100%;height:auto}
+.ov-mini-pie{width:60px;height:60px;margin:0 auto;display:block}
+.ov-health-value{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-bottom:8px}
+.ov-health-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.ov-legend-item{font-size:10px;color:var(--ink-3);display:flex;align-items:center;gap:4px}
+.ov-legend-dot{width:8px;height:8px;border-radius:2px}
+.ov-health-budget{margin-bottom:10px}
+.ov-budget-bar{margin-bottom:4px}
+.ov-budget-text{font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+
+/* AI 助手入口 */
+.ov-ai-entry{display:flex;align-items:center;gap:16px;background:var(--deck);border:1px solid var(--deck-line);padding:16px 20px;margin:16px 0}
+.ov-ai-icon{font-size:28px}
+.ov-ai-content{flex:1}
+.ov-ai-title{font-family:var(--serif);font-size:15px;color:var(--deck-ink);margin-bottom:2px}
+.ov-ai-sub{font-size:12px;color:var(--deck-ink-2)}
+.ov-ai-actions{display:flex;gap:8px}
+.ov-ai-actions .btn{background:transparent;border-color:var(--deck-line);color:var(--deck-ink-2)}
+.ov-ai-actions .btn:hover{border-color:var(--deck-gold);color:var(--deck-gold)}
+.ov-ai-actions .btn.gold{border-color:var(--deck-gold);color:var(--deck-gold)}
+
+/* ============ Tab 组件 ============ */
+.ov-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px}
+.ov-tab-btn{padding:10px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-3);
+  background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:all .14s}
+.ov-tab-btn:hover{color:var(--navy)}
+.ov-tab-btn.active{color:var(--navy-deep);border-bottom-color:var(--navy-deep);font-weight:600}
+.ov-tab-count{font-size:10px;padding:1px 5px;background:var(--paper-2);border-radius:2px;margin-left:4px}
+
+/* ============ 财税管理页 ============ */
+.fin-content{min-height:400px}
+.fin-section{background:var(--paper-3);border:1px solid var(--line);padding:16px;margin-bottom:16px}
+.fin-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.fin-section-header h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin:0}
+.fin-input-methods{display:flex;gap:6px}
+.fin-flow-paste{margin-top:12px}
+.fin-stats{display:flex;gap:16px;flex-wrap:wrap}
+.fin-stat{font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.fin-stat strong{font-size:12px;margin-left:4px}
+
+/* 税务中心 */
+.fin-tax-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.fin-tax-item:last-child{border-bottom:none}
+.fin-tax-info{flex:1;display:flex;align-items:center;gap:8px}
+.fin-tax-name{font-size:13px;color:var(--ink)}
+.fin-tax-due{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.fin-tax-amount{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--navy-deep)}
+.fin-tax-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.fin-tax-kpi{text-align:center;padding:12px 8px;background:var(--paper);border:1px solid var(--line)}
+.fin-tax-kpi-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:4px}
+.fin-tax-kpi-value{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--navy-deep)}
+.fin-tax-kpi-value small{font-size:12px;font-weight:400}
+.fin-tax-kpi-sub{font-size:10px;color:var(--ink-3);margin-top:2px}
+.fin-tax-kpi-sub.pos{color:var(--green)}
+.fin-tax-kpi-sub.neg{color:var(--red)}
+
+/* ============ 法务管理页 ============ */
+/* 合规雷达 */
+.legal-radar{margin-bottom:12px}
+.legal-radar-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.legal-radar-item:last-child{border-bottom:none}
+.legal-radar-label{width:80px;font-size:12px;color:var(--ink)}
+.legal-radar-bar{flex:1}
+.legal-radar-score{width:60px;font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink-2)}
+.legal-overall{font-family:var(--mono);font-size:12px;color:var(--ink-2);text-align:center;padding:8px;background:var(--paper)}
+
+/* 合规清单 */
+.legal-checklist-group{background:var(--paper-3);border:1px solid var(--line);padding:12px}
+.legal-checklist-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.legal-checklist-header span:first-child{font-family:var(--serif);font-size:13px;color:var(--navy-deep)}
+
+/* AI 法务助手 */
+.legal-ai-chat{background:var(--paper);border:1px solid var(--line);padding:16px}
+.legal-ai-messages{max-height:300px;overflow-y:auto;margin-bottom:12px}
+.legal-ai-msg{display:flex;gap:10px;margin-bottom:12px}
+.legal-ai-msg.user{flex-direction:row-reverse}
+.legal-ai-avatar{width:32px;height:32px;border-radius:50%;background:var(--navy-mist);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.legal-ai-msg.ai .legal-ai-avatar{background:var(--gold-faint)}
+.legal-ai-content{background:var(--paper-3);border:1px solid var(--line);padding:10px 14px;border-radius:4px;max-width:80%;font-size:13px;line-height:1.7}
+.legal-ai-msg.user .legal-ai-content{background:var(--navy);color:#fff;border-color:var(--navy)}
+.legal-ai-input{display:flex;gap:8px}
+.legal-ai-input input{flex:1}
+
+/* 律师服务卡片 */
+.legal-service-card{background:var(--paper-3);border:1px solid var(--line);border-top:2px solid var(--navy);padding:16px;text-align:center}
+.legal-service-card h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:8px}
+.legal-service-price{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--gold);margin-bottom:8px}
+.legal-service-card p{font-size:12px;color:var(--ink-2);margin-bottom:12px}
+
+/* ============ 打印导出：一页简报（隐藏导航与交互件，保留报表配色） ============ */
+@media print{
+  html,body{background:#fff}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .app{display:block}
+  .sidebar,.topbar,.tools,.btn,.reset,.ai-row .acts{display:none!important}
+  .view-wrap{padding:0;max-width:none}
+  .view.on{animation:none}
+  .table-scroll,.table-scroll[style]{max-height:none!important;overflow:visible!important}
+  .grid.g3,.grid.g4{grid-template-columns:1fr 1fr}
+  h3.sec,.card,.kpi,table.dense tr{break-inside:avoid}
+  h3.sec{break-after:avoid}
+  a{color:inherit;text-decoration:none}
+  @page{margin:14mm 12mm}
+}
