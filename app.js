@@ -38,10 +38,11 @@ DB.ledger = baseLedger.concat(ledgerLocal);
 var drafts = [];                              /* 流水粘贴识别出的草稿，仅本次会话 */
 
 /* ------------------------------------------------------------ 路由 */
-var VIEWS = ["overview", "finance", "legal", "ledger", "cashflow", "arap", "budget", "taxcal", "taxburden", "contracts", "regulations", "alerts", "checklist",
+var VIEWS = ["overview", "finance", "legal", "datacenter", "contractrisk", "settings", "ledger", "cashflow", "arap", "budget", "taxcal", "taxburden", "contracts", "regulations", "alerts", "checklist",
   "mixing", "shareholder", "annual", "invoices", "lifecycle", "social", "incentives", "resolutions", "exit"];
 var NAMES = {
   overview: "工作台总览", finance: "财税管理", legal: "法务管理",
+  datacenter: "数据中心", contractrisk: "合同与商务风险", settings: "设置与合规",
   ledger: "自动记账", cashflow: "现金流", arap: "应收应付", budget: "预算与成本",
   taxcal: "纳税日历", taxburden: "税负分析", contracts: "合同审查", regulations: "法规库",
   alerts: "风险预警", checklist: "合规清单",
@@ -51,6 +52,7 @@ var NAMES = {
 };
 var EN = {
   overview: "Executive Overview", finance: "Finance Hub", legal: "Legal Hub",
+  datacenter: "Data Center", contractrisk: "Contract & Business Risk", settings: "Settings & Compliance",
   ledger: "AI Bookkeeping", cashflow: "Cash Flow", arap: "AR / AP Aging", budget: "Budget vs Actual",
   taxcal: "Tax Calendar", taxburden: "Tax Burden", contracts: "Contract Review", regulations: "Regulation Library",
   alerts: "Risk Alerts", checklist: "Compliance Checklist",
@@ -858,6 +860,905 @@ function vLegal(el) {
     '<div class="fin-content">' + contentHtml + '</div>';
 }
 
+/* ------------------------------------------------------------ 视图：数据中心（4 Tab） */
+var dataTab = "health"; /* 当前 Tab：health | risk | forecast | export */
+function vDataCenter(el) {
+  /* Tab 切换 HTML */
+  var tabs = [
+    { key: "health", label: "经营健康度" },
+    { key: "risk", label: "风险雷达" },
+    { key: "forecast", label: "现金流预测" },
+    { key: "export", label: "导出报告" }
+  ];
+  var tabHtml = tabs.map(function (t) {
+    return '<button class="ov-tab-btn' + (dataTab === t.key ? ' active' : '') + '" data-data-tab="' + t.key + '">' +
+      esc(t.label) + '</button>';
+  }).join("");
+
+  var contentHtml = "";
+
+  /* ---- Tab: 经营健康度 ---- */
+  if (dataTab === "health") {
+    /* 核心指标计算 */
+    var inSum = 0, outSum = 0;
+    DB.ledger.forEach(function (r) { if (r.type === "收入") inSum += r.amount; else outSum += r.amount; });
+    var grossProfit = inSum - outSum;
+    var grossMargin = inSum > 0 ? grossProfit / inSum : 0;
+    var netMargin = grossMargin; /* 简化：无其他费用 */
+    var cashEnd = DB.cashflow.months[DB.cashflow.months.length - 1].end;
+    var totalAssets = cashEnd + DB.arap.receivables.reduce(function (s, r) { return s + r.amount; }, 0);
+    var totalLiabilities = DB.arap.payables.reduce(function (s, r) { return s + r.amount; }, 0) + DB.shareholder.loanBalance;
+    var debtRatio = totalAssets > 0 ? totalLiabilities / totalAssets : 0;
+
+    /* 指标卡片 */
+    var metrics = [
+      { label: "毛利率", value: pct(grossMargin, 1), trend: "行业均值 68%", cls: grossMargin > 0.68 ? "pos" : "neg" },
+      { label: "净利率", value: pct(netMargin, 1), trend: "行业均值 12%", cls: netMargin > 0.12 ? "pos" : "neg" },
+      { label: "现金流", value: fmt(cashEnd / 10000, 1) + " 万", trend: "跑道 " + DB.cashflow.runway.months + " 个月", cls: DB.cashflow.runway.months >= 6 ? "pos" : "neg" },
+      { label: "资产负债率", value: pct(debtRatio, 1), trend: "健康区间 <50%", cls: debtRatio < 0.5 ? "pos" : "neg" }
+    ];
+    var metricHtml = metrics.map(function (m) {
+      return '<div class="dc-metric">' +
+        '<div class="dc-metric-label">' + esc(m.label) + '</div>' +
+        '<div class="dc-metric-value ' + m.cls + '">' + esc(m.value) + '</div>' +
+        '<div class="dc-metric-trend ' + m.cls + '">' + esc(m.trend) + '</div>' +
+      '</div>';
+    }).join("");
+
+    /* 趋势图（SVG） */
+    var months = DB.cashflow.months;
+    var trendSvg = '<svg viewBox="0 0 400 120" class="dc-trend-chart">' +
+      '<defs><linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="var(--navy)" stop-opacity="0.2"/>' +
+      '<stop offset="100%" stop-color="var(--navy)" stop-opacity="0"/>' +
+      '</linearGradient></defs>';
+    /* 网格线 */
+    for (var g = 0; g <= 4; g++) {
+      var gy = 10 + g * 25;
+      trendSvg += '<line x1="40" y1="' + gy + '" x2="390" y2="' + gy + '" stroke="var(--line)" stroke-width="1"/>';
+    }
+    /* 折线 */
+    var maxVal = Math.max.apply(null, months.map(function (m) { return m.end; }));
+    var minVal = Math.min.apply(null, months.map(function (m) { return m.end; }));
+    var range = maxVal - minVal || 1;
+    var lineD = months.map(function (m, i) {
+      var x = 40 + i * (350 / (months.length - 1));
+      var y = 10 + (1 - (m.end - minVal) / range) * 100;
+      return (i === 0 ? "M" : "L") + x + " " + y;
+    }).join(" ");
+    trendSvg += '<path d="' + lineD + '" fill="none" stroke="var(--navy)" stroke-width="2"/>';
+    /* 数据点 */
+    months.forEach(function (m, i) {
+      var x = 40 + i * (350 / (months.length - 1));
+      var y = 10 + (1 - (m.end - minVal) / range) * 100;
+      trendSvg += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + (i === months.length - 1 ? "var(--gold)" : "var(--paper-3)") + '" stroke="var(--navy)" stroke-width="1.5"/>';
+      trendSvg += '<text x="' + x + '" y="118" text-anchor="middle" fill="var(--ink-3)" font-size="9">' + esc(m.label) + '</text>';
+    });
+    trendSvg += '</svg>';
+
+    /* 行业对标 */
+    var benchmarks = [
+      { label: "毛利率", value: grossMargin, industry: 0.68 },
+      { label: "净利率", value: netMargin, industry: 0.12 },
+      { label: "税负率", value: DB.taxburden.ytd.rate, industry: 0.032 },
+      { label: "人效", value: 7.97, industry: 5.2, unit: "万/人" }
+    ];
+    var benchmarkHtml = benchmarks.map(function (b) {
+      var diff = b.value - b.industry;
+      var diffPct = b.industry > 0 ? diff / b.industry : 0;
+      var cls = diffPct > 0 ? "pos" : "neg";
+      var label = diffPct > 0 ? "高于" : "低于";
+      return '<div class="dc-benchmark-item">' +
+        '<div class="dc-benchmark-label">' + esc(b.label) + '</div>' +
+        '<div class="dc-benchmark-value">' + (b.unit ? fmt(b.value, 2) + ' ' + b.unit : pct(b.value, 1)) + '</div>' +
+        '<div class="dc-benchmark-industry">行业 ' + (b.unit ? fmt(b.industry, 2) + ' ' + b.unit : pct(b.industry, 1)) + '</div>' +
+        '<div class="dc-benchmark-diff ' + cls + '">' + label + ' ' + pct(Math.abs(diffPct), 0) + '</div>' +
+      '</div>';
+    }).join("");
+
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📊 核心指标仪表盘</h4></div>' +
+        '<div class="dc-metrics-grid">' + metricHtml + '</div>' +
+      '</div>' +
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📈 趋势分析</h4></div>' +
+        '<div class="dc-trend-container">' + trendSvg + '</div>' +
+        '<div class="dc-trend-legend">' +
+          '<span class="dc-legend-item"><span class="dc-legend-dot" style="background:var(--navy)"></span>期末现金余额</span>' +
+          '<span class="dc-legend-item"><span class="dc-legend-dot" style="background:var(--gold)"></span>最新一期</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🏭 行业对标</h4></div>' +
+        '<div class="dc-benchmark-grid">' + benchmarkHtml + '</div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 风险雷达 ---- */
+  if (dataTab === "risk") {
+    /* 风险评分计算 */
+    var openAlerts = DB.alerts.filter(function (a) { var st = alertDone[a.id] || a.status; return st !== "已忽略" && st !== "已闭环"; });
+    var riskScores = {
+      "财务": 0, "税务": 0, "法务": 0, "合规": 0, "信用": 0, "运营": 0, "市场": 0, "人员": 0
+    };
+    /* 基于预警 */
+    openAlerts.forEach(function (a) {
+      var score = a.sev === "高" ? 15 : a.sev === "中" ? 8 : 3;
+      if (a.domain === "财") riskScores["财务"] += score;
+      else if (a.domain === "税") riskScores["税务"] += score;
+      else if (a.domain === "法") riskScores["法务"] += score;
+    });
+    /* 基于合规清单 */
+    var compDone = 0, compTotal = 0;
+    DB.checklist.forEach(function (g) {
+      g.items.forEach(function (it, i) {
+        compTotal++;
+        var checked = cklState[g.domain + "|" + i] != null ? cklState[g.domain + "|" + i] : it.done;
+        if (checked) compDone++;
+      });
+    });
+    riskScores["合规"] = Math.round((1 - compDone / compTotal) * 50);
+    /* 基于应收 */
+    var overdue90 = DB.arap.receivables.filter(function (r) { return r.status.indexOf("逾期") >= 0 && parseInt(r.status) > 90; });
+    riskScores["信用"] = Math.min(overdue90.length * 15, 60);
+    /* 基于社保 */
+    riskScores["人员"] = DB.social.issues.filter(function (i) { return i.level === "高"; }).length * 12;
+    /* 基于合同 */
+    var badContracts = DB.contracts.filter(function (c) { return c.verdictLevel === "bad"; });
+    riskScores["运营"] = badContracts.length * 10;
+    /* 市场风险（固定低值） */
+    riskScores["市场"] = 15;
+
+    /* 限制在 0-100 */
+    Object.keys(riskScores).forEach(function (k) {
+      riskScores[k] = Math.min(Math.max(riskScores[k], 0), 100);
+    });
+
+    /* 雷达图 SVG */
+    var riskKeys = Object.keys(riskScores);
+    var riskColors = ["var(--red)", "var(--gold)", "var(--navy)", "var(--green)", "var(--ink-3)", "var(--gold-2)", "var(--navy-mist)", "var(--red)"];
+    var radarCx = 150, radarCy = 130, radarR = 100;
+    var radarSvg = '<svg viewBox="0 0 300 280" class="dc-radar-chart">';
+    /* 背景网格 */
+    for (var r = 1; r <= 4; r++) {
+      var rr = radarR * r / 4;
+      var pts = riskKeys.map(function (k, i) {
+        var angle = (Math.PI * 2 * i / riskKeys.length) - Math.PI / 2;
+        return (radarCx + rr * Math.cos(angle)).toFixed(1) + "," + (radarCy + rr * Math.sin(angle)).toFixed(1);
+      }).join(" ");
+      radarSvg += '<polygon points="' + pts + '" fill="none" stroke="var(--line)" stroke-width="1"/>';
+    }
+    /* 轴线 */
+    riskKeys.forEach(function (k, i) {
+      var angle = (Math.PI * 2 * i / riskKeys.length) - Math.PI / 2;
+      var x2 = radarCx + radarR * Math.cos(angle);
+      var y2 = radarCy + radarR * Math.sin(angle);
+      radarSvg += '<line x1="' + radarCx + '" y1="' + radarCy + '" x2="' + x2 + '" y2="' + y2 + '" stroke="var(--line)" stroke-width="1"/>';
+      /* 标签 */
+      var lx = radarCx + (radarR + 20) * Math.cos(angle);
+      var ly = radarCy + (radarR + 20) * Math.sin(angle);
+      radarSvg += '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" fill="var(--ink-2)" font-size="10">' + esc(k) + '</text>';
+    });
+    /* 数据多边形 */
+    var dataPts = riskKeys.map(function (k, i) {
+      var angle = (Math.PI * 2 * i / riskKeys.length) - Math.PI / 2;
+      var val = riskScores[k] / 100;
+      var x = radarCx + radarR * val * Math.cos(angle);
+      var y = radarCy + radarR * val * Math.sin(angle);
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+    radarSvg += '<polygon points="' + dataPts + '" fill="var(--navy)" fill-opacity="0.15" stroke="var(--navy)" stroke-width="2"/>';
+    /* 数据点 */
+    riskKeys.forEach(function (k, i) {
+      var angle = (Math.PI * 2 * i / riskKeys.length) - Math.PI / 2;
+      var val = riskScores[k] / 100;
+      var x = radarCx + radarR * val * Math.cos(angle);
+      var y = radarCy + radarR * val * Math.sin(angle);
+      var color = riskScores[k] > 60 ? "var(--red)" : riskScores[k] > 30 ? "var(--gold)" : "var(--green)";
+      radarSvg += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + color + '" stroke="var(--paper-3)" stroke-width="2"/>';
+    });
+    radarSvg += '</svg>';
+
+    /* 风险评分列表 */
+    var riskListHtml = riskKeys.map(function (k) {
+      var score = riskScores[k];
+      var cls = score > 60 ? "red" : score > 30 ? "gold" : "green";
+      var level = score > 60 ? "高风险" : score > 30 ? "中风险" : "低风险";
+      return '<div class="dc-risk-item">' +
+        '<div class="dc-risk-label">' + esc(k) + '</div>' +
+        '<div class="dc-risk-bar"><div class="track"><i style="width:' + score + '%" class="' + cls + '"></i></div></div>' +
+        '<div class="dc-risk-score ' + cls + '">' + score + '/100</div>' +
+        '<div class="dc-risk-level">' + level + '</div>' +
+      '</div>';
+    }).join("");
+
+    /* 风险整改清单 */
+    var整改Items = [];
+    openAlerts.forEach(function (a) {
+      整改Items.push({ level: a.sev, text: a.title, href: "#/alerts" });
+    });
+    DB.checklist.forEach(function (g) {
+      g.items.forEach(function (it, i) {
+        var checked = cklState[g.domain + "|" + i] != null ? cklState[g.domain + "|" + i] : it.done;
+        if (!checked) {
+          整改Items.push({ level: "中", text: it.q.split("（")[0], href: "#/checklist" });
+        }
+      });
+    });
+    var整改Html = 整改Items.slice(0, 6).map(function (item) {
+      var lvlCls = item.level === "高" ? "red" : item.level === "中" ? "gold" : "plain";
+      return '<div class="dc-remedy-item">' +
+        '<span class="tag ' + lvlCls + '">' + esc(item.level) + '</span>' +
+        '<span class="dc-remedy-text">' + esc(item.text) + '</span>' +
+      '</div>';
+    }).join("");
+
+    contentHtml =
+      '<div class="grid g2">' +
+        '<div class="fin-section">' +
+          '<div class="fin-section-header"><h4>🎯 风险全景</h4></div>' +
+          '<div class="dc-radar-container">' + radarSvg + '</div>' +
+        '</div>' +
+        '<div class="fin-section">' +
+          '<div class="fin-section-header"><h4>📋 风险评分</h4></div>' +
+          '<div class="dc-risk-list">' + riskListHtml + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📝 风险整改任务清单</h4></div>' +
+        '<div class="dc-remedy-list">' +整改Html + '</div>' +
+        '<div style="margin-top:10px"><a class="fchip" href="#/alerts">查看全部预警 →</a></div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 现金流预测 ---- */
+  if (dataTab === "forecast") {
+    /* 简单预测：基于最近 3 个月平均 */
+    var recentMonths = DB.cashflow.months.slice(-3);
+    var avgInflow = recentMonths.reduce(function (s, m) { return s + m.inflow; }, 0) / 3;
+    var avgOutflow = recentMonths.reduce(function (s, m) { return s + m.outflow; }, 0) / 3;
+    var currentCash = DB.cashflow.months[DB.cashflow.months.length - 1].end;
+
+    var forecastMonths = ["10月", "11月", "12月"];
+    var forecastData = forecastMonths.map(function (label, i) {
+      var inflow = Math.round(avgInflow * (1 + (i * 0.05))); /* 假设增长 5% */
+      var outflow = Math.round(avgOutflow * (1 + (i * 0.03))); /* 假设增长 3% */
+      var end = currentCash + (inflow - outflow) * (i + 1);
+      return { label: label, inflow: inflow, outflow: outflow, end: end };
+    });
+
+    /* 预测卡片 */
+    var forecastHtml = forecastData.map(function (f) {
+      var net = f.inflow - f.outflow;
+      return '<div class="dc-forecast-card">' +
+        '<div class="dc-forecast-month">' + esc(f.label) + '</div>' +
+        '<div class="dc-forecast-row"><span>预计流入</span><span class="pos">' + yuan(f.inflow) + '</span></div>' +
+        '<div class="dc-forecast-row"><span>预计流出</span><span class="neg">' + yuan(f.outflow) + '</span></div>' +
+        '<div class="dc-forecast-row"><span>净额</span><span class="' + clsNum(net) + '">' + yuan(net) + '</span></div>' +
+        '<div class="dc-forecast-divider"></div>' +
+        '<div class="dc-forecast-row"><span>期末余额</span><strong>' + yuan(f.end) + '</strong></div>' +
+      '</div>';
+    }).join("");
+
+    /* 预警 */
+    var warnings = [];
+    if (forecastData[2].end < avgOutflow * 3) {
+      warnings.push("⚠️ 12 月期末余额低于 3 个月支出，需关注资金安全");
+    }
+    DB.taxcal.filter(function (t) { return t.due >= "2026-10" && t.due <= "2026-12"; }).forEach(function (t) {
+      warnings.push("📅 " + t.due + " " + t.item + " 需预留 " + t.tax);
+    });
+
+    var warningHtml = warnings.length ? warnings.map(function (w) {
+      return '<div class="dc-warning-item">' + esc(w) + '</div>';
+    }).join("") : '<div class="dc-warning-item ok">✅ 无资金安全预警</div>';
+
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🔮 现金流预测（未来 3 个月）</h4></div>' +
+        '<div class="dc-forecast-grid">' + forecastHtml + '</div>' +
+        '<div class="dc-forecast-note">* 预测基于最近 3 个月平均收支，假设收入增长 5%、支出增长 3%</div>' +
+      '</div>' +
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>⚠️ 预警提示</h4></div>' +
+        '<div class="dc-warning-list">' + warningHtml + '</div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 导出报告 ---- */
+  if (dataTab === "export") {
+    var reportTypes = [
+      { label: "月度报告", desc: "包含财务、税务、合规摘要", icon: "📊" },
+      { label: "季度报告", desc: "深度分析 + 行业对标", icon: "📈" },
+      { label: "年度报告", desc: "全年总结 + 下年规划", icon: "📋" }
+    ];
+    var reportHtml = reportTypes.map(function (r) {
+      return '<div class="dc-report-card">' +
+        '<div class="dc-report-icon">' + r.icon + '</div>' +
+        '<div class="dc-report-info">' +
+          '<div class="dc-report-label">' + esc(r.label) + '</div>' +
+          '<div class="dc-report-desc">' + esc(r.desc) + '</div>' +
+        '</div>' +
+        '<button class="btn gold">生成</button>' +
+      '</div>';
+    }).join("");
+
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📄 报告生成</h4></div>' +
+        '<div class="dc-report-list">' + reportHtml + '</div>' +
+        '<div class="dc-report-divider"></div>' +
+        '<div class="dc-report-content">' +
+          '<h4>报告内容包含</h4>' +
+          '<ul class="dc-report-items">' +
+            '<li>📊 财务摘要（收入/支出/利润/现金流）</li>' +
+            '<li>🏛️ 税务摘要（税负/申报/优惠）</li>' +
+            '<li>✅ 合规摘要（清单完成度/风险预警）</li>' +
+            '<li>🛡️ OPC 专项（隔离健康度/股东往来/年度节点）</li>' +
+            '<li>📝 下月行动建议</li>' +
+          '</ul>' +
+        '</div>' +
+        '<div style="margin-top:16px;display:flex;gap:8px">' +
+          '<button class="btn">预览</button>' +
+          '<button class="btn gold" onclick="window.print()">下载 PDF</button>' +
+          '<button class="btn">发送邮件</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  el.innerHTML =
+    vhead("datacenter",
+      "数据中心提供经营健康度仪表盘、风险雷达图、现金流预测曲线等可视化图表，辅助决策。",
+      ["经营健康度 · 风险雷达 · 现金流预测 · 导出报告"]) +
+    '<div class="ov-tabs">' + tabHtml + '</div>' +
+    '<div class="fin-content">' + contentHtml + '</div>';
+}
+
+/* ------------------------------------------------------------ 视图：合同与商务风险中心（MBA 认知增强） */
+var crTab = "framework"; /* 当前 Tab：framework | clauses | negotiate | structure | cases */
+function vContractRisk(el) {
+  /* Tab 切换 HTML */
+  var tabs = [
+    { key: "framework", label: "风险认知框架" },
+    { key: "clauses", label: "合同条款解剖" },
+    { key: "negotiate", label: "商务谈判工具" },
+    { key: "structure", label: "交易结构设计" },
+    { key: "cases", label: "案例库" }
+  ];
+  var tabHtml = tabs.map(function (t) {
+    return '<button class="ov-tab-btn' + (crTab === t.key ? ' active' : '') + '" data-cr-tab="' + t.key + '">' +
+      esc(t.label) + '</button>';
+  }).join("");
+
+  var contentHtml = "";
+
+  /* ---- Tab: 风险认知框架 ---- */
+  if (crTab === "framework") {
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🧠 合同风险认知框架（MBA 级）</h4></div>' +
+        '<div class="cr-framework-intro">' +
+          '<p>作为 IT 人转型 MBA，理解合同风险需要从「技术思维」转向「商业思维」。以下是核心认知框架：</p>' +
+        '</div>' +
+        '<div class="cr-framework-grid">' +
+          /* 1. 风险识别 */
+          '<div class="cr-framework-card">' +
+            '<div class="cr-framework-icon">🔍</div>' +
+            '<h4>1. 风险识别</h4>' +
+            '<p class="cr-framework-desc">从「能跑通」到「能赚钱且安全」</p>' +
+            '<ul class="cr-framework-list">' +
+              '<li><strong>技术风险</strong>：交付标准模糊、验收条件缺失</li>' +
+              '<li><strong>商业风险</strong>：付款条件不利、违约金不对等</li>' +
+              '<li><strong>法律风险</strong>：无限责任、知识产权归属不清</li>' +
+              '<li><strong>税务风险</strong>：发票类型、税率适用错误</li>' +
+            '</ul>' +
+            '<div class="cr-framework-tip">💡 IT 人常犯：只关注技术指标，忽略商业条款</div>' +
+          '</div>' +
+          /* 2. 风险评估 */
+          '<div class="cr-framework-card">' +
+            '<div class="cr-framework-icon">📊</div>' +
+            '<h4>2. 风险评估</h4>' +
+            '<p class="cr-framework-desc">用量化思维评估风险等级</p>' +
+            '<ul class="cr-framework-list">' +
+              '<li><strong>概率评估</strong>：该风险发生的可能性</li>' +
+              '<li><strong>影响评估</strong>：发生后对业务的影响程度</li>' +
+              '<li><strong>可控性</strong>：我们能否主动规避或转移</li>' +
+              '<li><strong>优先级</strong>：高概率+高影响=最高优先级</li>' +
+            '</ul>' +
+            '<div class="cr-framework-tip">💡 MBA 工具：风险矩阵（概率×影响）</div>' +
+          '</div>' +
+          /* 3. 风险应对 */
+          '<div class="cr-framework-card">' +
+            '<div class="cr-framework-icon">🛡️</div>' +
+            '<h4>3. 风险应对</h4>' +
+            '<p class="cr-framework-desc">四种策略：规避、转移、减轻、接受</p>' +
+            '<ul class="cr-framework-list">' +
+              '<li><strong>规避</strong>：拒绝高风险条款或交易</li>' +
+              '<li><strong>转移</strong>：通过保险或合同条款转移</li>' +
+              '<li><strong>减轻</strong>：增加保护性条款降低影响</li>' +
+              '<li><strong>接受</strong>：低风险可接受，但需监控</li>' +
+            '</ul>' +
+            '<div class="cr-framework-tip">💡 IT 人常犯：只懂「接受」，不懂「谈判」</div>' +
+          '</div>' +
+          /* 4. 合同谈判 */
+          '<div class="cr-framework-card">' +
+            '<div class="cr-framework-icon">🤝</div>' +
+            '<h4>4. 合同谈判</h4>' +
+            '<p class="cr-framework-desc">从「签不签」到「怎么签对自己有利」</p>' +
+            '<ul class="cr-framework-list">' +
+              '<li><strong>BATNA</strong>：最佳替代方案（谈判筹码）</li>' +
+              '<li><strong>锚定效应</strong>：先出价者设定谈判基准</li>' +
+              '<li><strong>利益交换</strong>：用次要利益换取核心利益</li>' +
+              '<li><strong>书面确认</strong>：所有口头承诺必须写入合同</li>' +
+            '</ul>' +
+            '<div class="cr-framework-tip">💡 MBA 核心：谈判是双赢游戏，不是零和博弈</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      /* 风险清单模板 */
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📋 合同风险自查清单</h4></div>' +
+        '<div class="cr-checklist-grid">' +
+          '<div class="cr-checklist-group">' +
+            '<h4>签约前</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 对方主体资格核查（营业执照、经营范围）</li>' +
+              '<li><input type="checkbox"> 对方履约能力评估（注册资本、经营状况）</li>' +
+              '<li><input type="checkbox"> 交易背景调查（是否存在关联关系）</li>' +
+              '<li><input type="checkbox"> 合同目的明确（我们想要什么结果）</li>' +
+            '</ul>' +
+          '</div>' +
+          '<div class="cr-checklist-group">' +
+            '<h4>签约中</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 核心条款逐条审核（标的、价格、付款）</li>' +
+              '<li><input type="checkbox"> 违约责任对等性检查</li>' +
+              '<li><input type="checkbox"> 争议解决方式确认（仲裁 vs 诉讼）</li>' +
+              '<li><input type="checkbox"> 合同生效条件明确</li>' +
+            '</ul>' +
+          '</div>' +
+          '<div class="cr-checklist-group">' +
+            '<h4>签约后</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 合同台账登记（到期日、付款节点）</li>' +
+              '<li><input type="checkbox"> 履行证据保留（邮件、验收单、付款凭证）</li>' +
+              '<li><input type="checkbox"> 定期履约检查（是否按约定执行）</li>' +
+              '<li><input type="checkbox"> 变更/补充协议管理</li>' +
+            '</ul>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 合同条款解剖 ---- */
+  if (crTab === "clauses") {
+    /* 常见高风险条款 */
+    var clauses = [
+      {
+        name: "无限责任条款",
+        risk: "高",
+        example: "乙方对甲方的任何损失承担无限连带责任",
+        problem: "将所有风险转嫁给乙方，且无上限",
+        fix: "改为「以合同总价为上限」或「仅对直接损失负责」",
+        mba: "MBA 视角：这是典型的「风险不对等」，接受即意味着用全部资产赌一个项目"
+      },
+      {
+        name: "验收标准模糊",
+        risk: "高",
+        example: "甲方满意即视为验收通过",
+        problem: "验收标准主观，甲方可以无理由拒付",
+        fix: "明确验收指标、验收流程、异议期",
+        mba: "MBA 视角：「满意」是主观判断，必须转化为可量化的 KPI"
+      },
+      {
+        name: "付款条件不利",
+        risk: "中",
+        example: "项目完成后 180 天内付款",
+        problem: "现金流压力大，且存在坏账风险",
+        fix: "争取预付款+里程碑付款，缩短账期",
+        mba: "MBA 视角：账期就是隐性成本，180 天账期≈年化 10% 融资成本"
+      },
+      {
+        name: "知识产权归属不清",
+        risk: "高",
+        example: "项目成果归甲方所有",
+        problem: "可能是「全部成果」包括背景 IP",
+        fix: "明确「仅限本项目新增 IP」，保留背景 IP 权属",
+        mba: "MBA 视角：IP 是科技公司核心资产，必须明确边界"
+      },
+      {
+        name: "违约金不对等",
+        risk: "中",
+        example: "乙方违约支付合同总价 30% 违约金；甲方违约不承担违约责任",
+        problem: "单方面惩罚，显失公平",
+        fix: "违约责任应对等，比例合理（通常 10-20%）",
+        mba: "MBA 视角：不对等条款在法律上可能被认定为无效"
+      },
+      {
+        name: "竞业限制过宽",
+        risk: "中",
+        example: "乙方在合同期满后 2 年内不得从事同类业务",
+        problem: "限制过度，影响后续业务发展",
+        fix: "限定竞业范围、地域、补偿标准",
+        mba: "MBA 视角：竞业限制必须有对价（补偿金），否则可能无效"
+      }
+    ];
+
+    var clauseCards = clauses.map(function (c) {
+      var riskCls = c.risk === "高" ? "red" : c.risk === "中" ? "gold" : "plain";
+      return '<div class="cr-clause-card">' +
+        '<div class="cr-clause-header">' +
+          '<h4>' + esc(c.name) + '</h4>' +
+          '<span class="tag ' + riskCls + '">' + esc(c.risk) + '风险</span>' +
+        '</div>' +
+        '<div class="cr-clause-section">' +
+          '<div class="cr-clause-label">❌ 问题条款</div>' +
+          '<div class="cr-clause-example">' + esc(c.example) + '</div>' +
+          '<div class="cr-clause-problem">' + esc(c.problem) + '</div>' +
+        '</div>' +
+        '<div class="cr-clause-section">' +
+          '<div class="cr-clause-label">✅ 修改建议</div>' +
+          '<div class="cr-clause-fix">' + esc(c.fix) + '</div>' +
+        '</div>' +
+        '<div class="cr-clause-section mba">' +
+          '<div class="cr-clause-label">🎓 MBA 视角</div>' +
+          '<div class="cr-clause-mba">' + esc(c.mba) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🔍 常见高风险条款解剖</h4></div>' +
+        '<p class="cr-intro">以下是最常见的 6 类高风险条款，每类都包含「问题条款」→「修改建议」→「MBA 视角」三层解析：</p>' +
+        '<div class="cr-clause-grid">' + clauseCards + '</div>' +
+      '</div>' +
+      /* 条款速查表 */
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📋 条款速查表</h4></div>' +
+        '<div class="table-scroll"><table class="dense"><thead><tr>' +
+          '<th>条款类型</th><th>风险等级</th><th>关键检查点</th><th>谈判策略</th>' +
+        '</tr></thead><tbody>' +
+          '<tr><td>付款条款</td><td><span class="tag gold">中</span></td><td>预付款比例、账期、付款条件</td><td>争取 30% 预付 + 里程碑付款</td></tr>' +
+          '<tr><td>违约责任</td><td><span class="tag red">高</span></td><td>违约金比例、上限、对等性</td><td>违约金不超过 20%，双向约束</td></tr>' +
+          '<tr><td>验收标准</td><td><span class="tag red">高</span></td><td>验收指标、流程、异议期</td><td>量化 KPI，明确验收流程</td></tr>' +
+          '<tr><td>知识产权</td><td><span class="tag red">高</span></td><td>归属范围、背景 IP、衍生 IP</td><td>仅限新增 IP，保留背景 IP</td></tr>' +
+          '<tr><td>保密条款</td><td><span class="tag gold">中</span></td><td>范围、期限、违约责任</td><td>限定范围，合理期限（2-3 年）</td></tr>' +
+          '<tr><td>争议解决</td><td><span class="tag plain">低</span></td><td>管辖法院/仲裁机构</td><td>优先选择己方所在地</td></tr>' +
+        '</tbody></table></div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 商务谈判工具 ---- */
+  if (crTab === "negotiate") {
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🤝 商务谈判核心工具</h4></div>' +
+        '<div class="cr-negotiate-grid">' +
+          /* BATNA */
+          '<div class="cr-negotiate-card">' +
+            '<h4>🎯 BATNA 分析</h4>' +
+            '<p class="cr-negotiate-desc"><strong>Best Alternative To a Negotiated Agreement</strong></p>' +
+            '<p>谈判前必须想清楚：如果这笔交易谈不成，我们的最佳替代方案是什么？</p>' +
+            '<div class="cr-negotiate-example">' +
+              '<strong>示例：</strong>' +
+              '<ul>' +
+                '<li>当前谈判：A 客户，合同金额 50 万，但条款苛刻</li>' +
+                '<li>BATNA：B 客户，合同金额 45 万，条款合理</li>' +
+                '<li>结论：A 客户的底线是 48 万 + 条款修改</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-negotiate-tip">💡 没有 BATNA 的谈判 = 没有筹码的赌博</div>' +
+          '</div>' +
+          /* 锚定效应 */
+          '<div class="cr-negotiate-card">' +
+            '<h4>⚓ 锚定效应</h4>' +
+            '<p class="cr-negotiate-desc"><strong>先出价者设定谈判基准</strong></p>' +
+            '<p>第一个报价会成为后续谈判的「锚点」，影响双方预期。</p>' +
+            '<div class="cr-negotiate-example">' +
+              '<strong>策略：</strong>' +
+              '<ul>' +
+                '<li>如果对方先出价低 → 提出你的高价，拉回谈判区间</li>' +
+                '<li>如果你先出价 → 设定一个合理的高位锚点</li>' +
+                '<li>报价要有依据 → 让对方觉得「这个价格合理」</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-negotiate-tip">💡 报价 = 成本 + 合理利润 + 谈判空间</div>' +
+          '</div>' +
+          /* 利益交换 */
+          '<div class="cr-negotiate-card">' +
+            '<h4>🔄 利益交换</h4>' +
+            '<p class="cr-negotiate-desc"><strong>用次要利益换取核心利益</strong></p>' +
+            '<p>不要在单一问题上僵持，学会「打包谈判」。</p>' +
+            '<div class="cr-negotiate-example">' +
+              '<strong>示例：</strong>' +
+              '<ul>' +
+                '<li>核心利益：预付款比例（30% vs 10%）</li>' +
+                '<li>次要利益：交付周期（30 天 vs 45 天）</li>' +
+                '<li>交换：接受 45 天交付，换取 30% 预付款</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-negotiate-tip">💡 好的谈判是双赢，不是你死我活</div>' +
+          '</div>' +
+          /* 书面确认 */
+          '<div class="cr-negotiate-card">' +
+            '<h4>📝 书面确认</h4>' +
+            '<p class="cr-negotiate-desc"><strong>所有口头承诺必须写入合同</strong></p>' +
+            '<p>「口说无凭」是商务谈判的大忌。</p>' +
+            '<div class="cr-negotiate-example">' +
+              '<strong>必须书面化：</strong>' +
+              '<ul>' +
+                '<li>价格折扣、优惠条件</li>' +
+                '<li>交付时间、验收标准</li>' +
+                '<li>售后服务、质保期限</li>' +
+                '<li>任何口头承诺的额外条件</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-negotiate-tip">💡 没有写入合同的承诺 = 没有承诺</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      /* 谈判策略清单 */
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📋 谈判前准备清单</h4></div>' +
+        '<div class="cr-checklist-grid">' +
+          '<div class="cr-checklist-group">' +
+            '<h4>信息收集</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 对方公司背景调查</li>' +
+              '<li><input type="checkbox"> 对方谈判代表风格分析</li>' +
+              '<li><input type="checkbox"> 市场行情和竞争对手报价</li>' +
+              '<li><input type="checkbox"> 对方可能的 BATNA</li>' +
+            '</ul>' +
+          '</div>' +
+          '<div class="cr-checklist-group">' +
+            '<h4>筹码准备</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 我方 BATNA 明确</li>' +
+              '<li><input type="checkbox"> 核心利益排序（必须得到 vs 可以交换）</li>' +
+              '<li><input type="checkbox"> 让步空间和底线</li>' +
+              '<li><input type="checkbox"> 备选方案（Plan B）</li>' +
+            '</ul>' +
+          '</div>' +
+          '<div class="cr-checklist-group">' +
+            '<h4>风险预案</h4>' +
+            '<ul class="cr-checklist">' +
+              '<li><input type="checkbox"> 对方可能的强硬立场</li>' +
+              '<li><input type="checkbox"> 谈判破裂的后果评估</li>' +
+              '<li><input type="checkbox"> 法律顾问提前沟通</li>' +
+              '<li><input type="checkbox"> 合同模板和条款库准备</li>' +
+            '</ul>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 交易结构设计 ---- */
+  if (crTab === "structure") {
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🏗️ 交易结构设计工具</h4></div>' +
+        '<p class="cr-intro">好的交易结构 = 合法 + 合规 + 税优 + 风险可控。以下是 IT 服务常见的交易结构选择：</p>' +
+        '<div class="cr-structure-grid">' +
+          /* 固定总价 */
+          '<div class="cr-structure-card">' +
+            '<h4>💰 固定总价合同</h4>' +
+            '<div class="cr-structure适用">适用场景：需求明确、范围清晰的项目</div>' +
+            '<div class="cr-structure-pros">' +
+              '<strong>✅ 优点：</strong>' +
+              '<ul>' +
+                '<li>收入确定，便于预算管理</li>' +
+                '<li>客户预算可控</li>' +
+                '<li>结算简单</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-cons">' +
+              '<strong>❌ 风险：</strong>' +
+              '<ul>' +
+                '<li>范围变更导致成本超支</li>' +
+                '<li>需求蔓延风险</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-tip">💡 关键：明确范围边界 + 变更流程</div>' +
+          '</div>' +
+          /* 时间材料 */
+          '<div class="cr-structure-card">' +
+            '<h4>⏱️ 时间材料合同（T&M）</h4>' +
+            '<div class="cr-structure适用">适用场景：需求不明确、持续迭代的项目</div>' +
+            '<div class="cr-structure-pros">' +
+              '<strong>✅ 优点：</strong>' +
+              '<ul>' +
+                '<li>灵活性高，适应需求变化</li>' +
+                '<li>风险共担</li>' +
+                '<li>适合敏捷开发</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-cons">' +
+              '<strong>❌ 风险：</strong>' +
+              '<ul>' +
+                '<li>收入不确定</li>' +
+                '<li>客户可能质疑工时</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-tip">💡 关键：透明报价 + 定期报告 + 工时确认</div>' +
+          '</div>' +
+          /* 里程碑付款 */
+          '<div class="cr-structure-card">' +
+            '<h4>🎯 里程碑付款</h4>' +
+            '<div class="cr-structure适用">适用场景：周期长、阶段明确的项目</div>' +
+            '<div class="cr-structure-pros">' +
+              '<strong>✅ 优点：</strong>' +
+              '<ul>' +
+                '<li>现金流友好</li>' +
+                '<li>阶段性验收降低风险</li>' +
+                '<li>激励按时交付</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-cons">' +
+              '<strong>❌ 风险：</strong>' +
+              '<ul>' +
+                '<li>里程碑定义争议</li>' +
+                '<li>前置收款后客户违约</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-tip">💡 关键：里程碑可验证 + 付款与交付挂钩</div>' +
+          '</div>' +
+          /* 分成模式 */
+          '<div class="cr-structure-card">' +
+            '<h4>🤝 收益分成模式</h4>' +
+            '<div class="cr-structure适用">适用场景：长期合作、利益绑定</div>' +
+            '<div class="cr-structure-pros">' +
+              '<strong>✅ 优点：</strong>' +
+              '<ul>' +
+                '<li>利益绑定，激励最大化</li>' +
+                '<li>降低客户前期投入</li>' +
+                '<li>建立长期关系</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-cons">' +
+              '<strong>❌ 风险：</strong>' +
+              '<ul>' +
+                '<li>收入不确定</li>' +
+                '<li>数据透明度要求高</li>' +
+              '</ul>' +
+            '</div>' +
+            '<div class="cr-structure-tip">💡 关键：分成比例 + 数据审计权 + 退出机制</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      /* 税务优化提示 */
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>🏛️ 交易结构与税务优化</h4></div>' +
+        '<div class="cr-tax-grid">' +
+          '<div class="cr-tax-item">' +
+            '<h4>合同拆分</h4>' +
+            '<p>将「技术服务 + 硬件销售」拆分为两份合同，适用不同税率（6% vs 13%）</p>' +
+            '<div class="cr-tax-saving">预估节税：¥3,000-5,000/单</div>' +
+          '</div>' +
+          '<div class="cr-tax-item">' +
+            '<h4>收入确认时点</h4>' +
+            '<p>选择合适的收入确认方式（完工百分比法 vs 完成合同法），优化现金流</p>' +
+            '<div class="cr-tax-saving">现金流改善：提前 1-3 个月</div>' +
+          '</div>' +
+          '<div class="cr-tax-item">' +
+            '<h4>关联交易定价</h4>' +
+            '<p>集团内服务定价需符合独立交易原则，避免转让定价风险</p>' +
+            '<div class="cr-tax-saving">风险规避：避免补税+罚款</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ---- Tab: 案例库 ---- */
+  if (crTab === "cases") {
+    var cases = [
+      {
+        title: "某 IT 公司因无限责任条款赔偿 200 万",
+        type: "反面案例",
+        risk: "高",
+        summary: "合同约定「乙方对甲方任何损失承担无限责任」，项目上线后甲方系统故障（非 IT 公司原因），甲方起诉索赔 200 万。",
+        lesson: "无限责任条款是致命陷阱，必须改为「以合同总价为上限」",
+        mba: "MBA 教训：风险管理的核心是「风险边界」，无限责任 = 无限风险"
+      },
+      {
+        title: "验收标准模糊导致 50 万尾款无法收回",
+        type: "反面案例",
+        risk: "高",
+        summary: "合同仅约定「甲方满意即验收」，项目交付后甲方以「不满意」为由拒付尾款 50 万，IT 公司无法举证。",
+        lesson: "验收标准必须量化：功能清单 + 性能指标 + 验收流程",
+        mba: "MBA 教训：「满意」是主观判断，商业合作需要客观标准"
+      },
+      {
+        title: "通过合同拆分节省税负 8 万",
+        type: "正面案例",
+        risk: "低",
+        summary: "某公司将「软件开发 + 硬件采购」拆分为两份合同，软件部分适用 6% 税率，硬件部分适用 13% 税率，合理降低税负。",
+        lesson: "交易结构设计可以合法节税，但需要真实业务支撑",
+        mba: "MBA 教训：税务筹划必须基于真实业务，虚假拆分=偷税"
+      },
+      {
+        title: "里程碑付款拯救现金流",
+        type: "正面案例",
+        risk: "低",
+        summary: "某外包项目原定「完工后 90 天付款」，改为「4 个里程碑各付 25%」后，现金流压力大幅缓解。",
+        lesson: "付款条款谈判是「时间换空间」的艺术",
+        mba: "MBA 教训：账期就是隐性成本，缩短账期 = 降低融资成本"
+      },
+      {
+        title: "竞业限制纠纷损失 30 万",
+        type: "反面案例",
+        risk: "中",
+        summary: "员工离职后加入竞争对手，公司起诉竞业限制违约，但因未支付竞业补偿金，法院判定竞业条款无效。",
+        lesson: "竞业限制必须有对价（补偿金），否则可能无效",
+        mba: "MBA 教训：权利义务对等是法律基本原则"
+      },
+      {
+        title: "保密条款过宽导致业务受限",
+        type: "反面案例",
+        risk: "中",
+        summary: "合同保密条款约定「不得从事同类业务」，范围过宽，导致 IT 公司后续无法承接类似项目。",
+        lesson: "保密范围必须限定：特定项目 + 特定信息 + 特定期限",
+        mba: "MBA 教训：条款范围过宽 = 自己给自己挖坑"
+      }
+    ];
+
+    var caseCards = cases.map(function (c) {
+      var typeCls = c.type === "反面案例" ? "red" : "green";
+      var riskCls = c.risk === "高" ? "red" : c.risk === "中" ? "gold" : "plain";
+      return '<div class="cr-case-card">' +
+        '<div class="cr-case-header">' +
+          '<h4>' + esc(c.title) + '</h4>' +
+          '<span class="tag ' + typeCls + '">' + esc(c.type) + '</span>' +
+        '</div>' +
+        '<div class="cr-case-summary">' + esc(c.summary) + '</div>' +
+        '<div class="cr-case-lesson">' +
+          '<strong>📋 教训：</strong>' + esc(c.lesson) +
+        '</div>' +
+        '<div class="cr-case-mba">' +
+          '<strong>🎓 MBA 视角：</strong>' + esc(c.mba) +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    contentHtml =
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📚 合同风险案例库</h4></div>' +
+        '<p class="cr-intro">真实案例是最好的老师。以下是精选的 6 个典型案例，每个都包含「案例事实」→「教训总结」→「MBA 视角」三层解析：</p>' +
+        '<div class="cr-case-grid">' + caseCards + '</div>' +
+      '</div>' +
+      /* 风险案例统计 */
+      '<div class="fin-section">' +
+        '<div class="fin-section-header"><h4>📊 风险案例统计</h4></div>' +
+        '<div class="cr-case-stats">' +
+          '<div class="cr-case-stat">' +
+            '<div class="cr-case-stat-value">6</div>' +
+            '<div class="cr-case-stat-label">案例总数</div>' +
+          '</div>' +
+          '<div class="cr-case-stat red">' +
+            '<div class="cr-case-stat-value">4</div>' +
+            '<div class="cr-case-stat-label">反面案例</div>' +
+          '</div>' +
+          '<div class="cr-case-stat green">' +
+            '<div class="cr-case-stat-value">2</div>' +
+            '<div class="cr-case-stat-label">正面案例</div>' +
+          '</div>' +
+          '<div class="cr-case-stat">' +
+            '<div class="cr-case-stat-value">¥280万+</div>' +
+            '<div class="cr-case-stat-label">潜在损失</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  el.innerHTML =
+    vhead("contractrisk",
+      "合同与商务风险中心：帮助 IT 人快速建立 MBA 级别的合同风险认知，从「能跑通」到「能赚钱且安全」。",
+      ["风险认知框架 · 条款解剖 · 谈判工具 · 交易结构 · 案例库"]) +
+    '<div class="ov-tabs">' + tabHtml + '</div>' +
+    '<div class="fin-content">' + contentHtml + '</div>';
+}
+
 /* ------------------------------------------------------------ 流水粘贴：规则识别引擎 */
 function matchCatRules(line) {
   var hits = [];
@@ -1637,7 +2538,7 @@ function vExit(el) {
 
 /* ------------------------------------------------------------ 渲染与事件 */
 var RENDER = {
-  overview: vOverview, finance: vFinance, legal: vLegal,
+  overview: vOverview, finance: vFinance, legal: vLegal, datacenter: vDataCenter, contractrisk: vContractRisk,
   ledger: vLedger, cashflow: vCashflow, arap: vArap, budget: vBudget,
   taxcal: vTaxcal, taxburden: vTaxburden, contracts: vContracts, regulations: vRegulations,
   alerts: vAlerts, checklist: vChecklist,

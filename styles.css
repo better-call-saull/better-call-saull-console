@@ -1134,6 +1134,20 @@ table.cus-matrix{min-width:920px}
   .ov-health-grid{grid-template-columns:1fr 1fr}
   .ov-ai-entry{flex-wrap:wrap}
   .ov-ai-actions{width:100%;justify-content:flex-start}
+  /* 数据中心响应式 */
+  .dc-metrics-grid{grid-template-columns:1fr 1fr}
+  .dc-benchmark-grid{grid-template-columns:1fr 1fr}
+  .dc-forecast-grid{grid-template-columns:1fr}
+  .fin-tax-summary{grid-template-columns:1fr 1fr}
+  /* 合同与商务风险响应式 */
+  .cr-framework-grid{grid-template-columns:1fr}
+  .cr-checklist-grid{grid-template-columns:1fr}
+  .cr-clause-grid{grid-template-columns:1fr}
+  .cr-negotiate-grid{grid-template-columns:1fr}
+  .cr-structure-grid{grid-template-columns:1fr}
+  .cr-tax-grid{grid-template-columns:1fr}
+  .cr-case-grid{grid-template-columns:1fr}
+  .cr-case-stats{grid-template-columns:1fr 1fr}
 }
 @media (max-width:640px){
   .kpi-strip,.g2,.g3,.g4,.do-dont{grid-template-columns:1fr}
@@ -1160,6 +1174,12 @@ table.cus-matrix{min-width:920px}
   .ov-health-grid{grid-template-columns:1fr}
   .ov-ai-entry{flex-direction:column;text-align:center}
   .ov-ai-actions{justify-content:center}
+  /* 数据中心移动端 */
+  .dc-metrics-grid{grid-template-columns:1fr}
+  .dc-metric-value{font-size:18px}
+  .dc-benchmark-grid{grid-template-columns:1fr}
+  .dc-forecast-grid{grid-template-columns:1fr}
+  .fin-tax-summary{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){
   *,.view{animation:none!important;transition:none!important}
@@ -1408,6 +1428,166 @@ svg .ldot.hot{fill:var(--gold-faint);stroke:var(--gold)}
 .legal-service-card h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:8px}
 .legal-service-price{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--gold);margin-bottom:8px}
 .legal-service-card p{font-size:12px;color:var(--ink-2);margin-bottom:12px}
+
+/* ============ 数据中心 ============ */
+/* 核心指标 */
+.dc-metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.dc-metric{text-align:center;padding:16px 12px;background:var(--paper);border:1px solid var(--line)}
+.dc-metric-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:6px}
+.dc-metric-value{font-family:var(--mono);font-size:22px;font-weight:600;margin-bottom:4px}
+.dc-metric-value.pos{color:var(--green)}
+.dc-metric-value.neg{color:var(--red)}
+.dc-metric-trend{font-size:11px;color:var(--ink-3)}
+.dc-metric-trend.pos{color:var(--green)}
+.dc-metric-trend.neg{color:var(--red)}
+
+/* 趋势图 */
+.dc-trend-container{margin-bottom:12px}
+.dc-trend-chart{width:100%;height:auto}
+.dc-trend-legend{display:flex;gap:16px;justify-content:center}
+.dc-legend-item{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.dc-legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* 行业对标 */
+.dc-benchmark-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.dc-benchmark-item{text-align:center;padding:12px;background:var(--paper);border:1px solid var(--line)}
+.dc-benchmark-label{font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.dc-benchmark-value{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--navy-deep);margin-bottom:4px}
+.dc-benchmark-industry{font-size:10px;color:var(--ink-3);margin-bottom:4px}
+.dc-benchmark-diff{font-family:var(--mono);font-size:10px;padding:2px 6px;display:inline-block}
+.dc-benchmark-diff.pos{color:var(--green);background:rgba(12,107,74,.08)}
+.dc-benchmark-diff.neg{color:var(--red);background:rgba(160,50,41,.08)}
+
+/* 风险雷达 */
+.dc-radar-container{display:flex;justify-content:center}
+.dc-radar-chart{max-width:300px;height:auto}
+.dc-risk-list{display:flex;flex-direction:column;gap:8px}
+.dc-risk-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.dc-risk-item:last-child{border-bottom:none}
+.dc-risk-label{width:50px;font-size:12px;color:var(--ink)}
+.dc-risk-bar{flex:1}
+.dc-risk-score{width:60px;font-family:var(--mono);font-size:12px;text-align:right}
+.dc-risk-score.pos{color:var(--green)}
+.dc-risk-score.gold{color:var(--gold)}
+.dc-risk-score.red{color:var(--red)}
+.dc-risk-level{width:50px;font-size:10px;color:var(--ink-3);text-align:right}
+
+/* 风险整改清单 */
+.dc-remedy-list{display:flex;flex-direction:column;gap:6px}
+.dc-remedy-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.dc-remedy-item:last-child{border-bottom:none}
+.dc-remedy-text{font-size:12px;color:var(--ink);flex:1}
+
+/* 现金流预测 */
+.dc-forecast-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:12px}
+.dc-forecast-card{background:var(--paper);border:1px solid var(--line);padding:16px;text-align:center}
+.dc-forecast-month{font-family:var(--serif);font-size:16px;color:var(--navy-deep);margin-bottom:12px}
+.dc-forecast-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
+.dc-forecast-row span:first-child{color:var(--ink-3)}
+.dc-forecast-row span:last-child{font-family:var(--mono);font-weight:600}
+.dc-forecast-row strong{font-family:var(--mono);font-size:14px;color:var(--navy-deep)}
+.dc-forecast-divider{border-top:1px solid var(--line);margin:8px 0}
+.dc-forecast-note{font-size:10px;color:var(--ink-3);text-align:center;font-style:italic}
+
+/* 预警提示 */
+.dc-warning-list{display:flex;flex-direction:column;gap:6px}
+.dc-warning-item{padding:8px 12px;background:var(--paper);border-left:3px solid var(--gold);font-size:12px;color:var(--ink)}
+.dc-warning-item.ok{border-left-color:var(--green);color:var(--green)}
+
+/* 导出报告 */
+.dc-report-list{display:flex;flex-direction:column;gap:12px}
+.dc-report-card{display:flex;align-items:center;gap:16px;padding:16px;background:var(--paper);border:1px solid var(--line)}
+.dc-report-icon{font-size:28px}
+.dc-report-info{flex:1}
+.dc-report-label{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:2px}
+.dc-report-desc{font-size:12px;color:var(--ink-2)}
+.dc-report-divider{border-top:1px solid var(--line);margin:16px 0}
+.dc-report-content h4{font-family:var(--serif);font-size:13px;color:var(--navy-deep);margin-bottom:8px}
+.dc-report-items{list-style:none;padding:0}
+.dc-report-items li{padding:4px 0;font-size:12px;color:var(--ink-2)}
+
+/* ============ 合同与商务风险中心 ============ */
+/* 风险认知框架 */
+.cr-framework-intro{margin-bottom:16px;font-size:13px;color:var(--ink-2);line-height:1.8}
+.cr-framework-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cr-framework-card{background:var(--paper);border:1px solid var(--line);border-top:2px solid var(--navy);padding:16px}
+.cr-framework-icon{font-size:28px;margin-bottom:8px}
+.cr-framework-card h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:8px}
+.cr-framework-desc{font-size:12px;color:var(--ink-2);margin-bottom:10px;font-style:italic}
+.cr-framework-list{list-style:none;padding:0;margin:0}
+.cr-framework-list li{padding:4px 0;font-size:12px;color:var(--ink);border-bottom:1px dashed var(--line)}
+.cr-framework-list li:last-child{border-bottom:none}
+.cr-framework-list li strong{color:var(--navy)}
+.cr-framework-tip{margin-top:10px;padding:8px;background:var(--gold-faint);border-left:3px solid var(--gold);font-size:11px;color:var(--gold)}
+
+/* 合同风险自查清单 */
+.cr-checklist-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.cr-checklist-group{background:var(--paper);border:1px solid var(--line);padding:12px}
+.cr-checklist-group h4{font-family:var(--serif);font-size:13px;color:var(--navy-deep);margin-bottom:8px}
+.cr-checklist{list-style:none;padding:0;margin:0}
+.cr-checklist li{padding:6px 0;font-size:12px;color:var(--ink);border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:6px}
+.cr-checklist li:last-child{border-bottom:none}
+.cr-checklist input[type=checkbox]{width:14px;height:14px;accent-color:var(--navy)}
+
+/* 条款解剖 */
+.cr-intro{margin-bottom:16px;font-size:13px;color:var(--ink-2);line-height:1.8}
+.cr-clause-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cr-clause-card{background:var(--paper);border:1px solid var(--line);padding:16px}
+.cr-clause-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cr-clause-header h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin:0}
+.cr-clause-section{margin-bottom:12px}
+.cr-clause-section:last-child{margin-bottom:0}
+.cr-clause-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:4px}
+.cr-clause-example{font-family:var(--mono);font-size:12px;color:var(--red);padding:8px;background:rgba(160,50,41,.05);border-left:3px solid var(--red);margin-bottom:4px}
+.cr-clause-problem{font-size:12px;color:var(--ink-2)}
+.cr-clause-fix{font-size:12px;color:var(--green);padding:8px;background:rgba(12,107,74,.05);border-left:3px solid var(--green)}
+.cr-clause-section.mba{background:var(--gold-faint);padding:10px;margin-top:8px}
+.cr-clause-mba{font-size:12px;color:var(--gold);font-style:italic}
+
+/* 商务谈判工具 */
+.cr-negotiate-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cr-negotiate-card{background:var(--paper);border:1px solid var(--line);border-top:2px solid var(--navy);padding:16px}
+.cr-negotiate-card h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:6px}
+.cr-negotiate-desc{font-size:11px;color:var(--ink-3);margin-bottom:8px}
+.cr-negotiate-card p{font-size:12px;color:var(--ink);margin-bottom:8px;line-height:1.7}
+.cr-negotiate-example{background:var(--paper-3);border:1px solid var(--line);padding:10px;margin:8px 0;font-size:12px}
+.cr-negotiate-example ul{margin:4px 0;padding-left:16px}
+.cr-negotiate-example li{margin-bottom:4px}
+.cr-negotiate-tip{margin-top:8px;padding:8px;background:var(--gold-faint);border-left:3px solid var(--gold);font-size:11px;color:var(--gold)}
+
+/* 交易结构设计 */
+.cr-structure-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cr-structure-card{background:var(--paper);border:1px solid var(--line);border-top:2px solid var(--navy);padding:16px}
+.cr-structure-card h4{font-family:var(--serif);font-size:14px;color:var(--navy-deep);margin-bottom:8px}
+.cr-structure适用{font-size:11px;color:var(--ink-3);margin-bottom:10px;font-style:italic}
+.cr-structure-pros,.cr-structure-cons{margin-bottom:8px}
+.cr-structure-pros ul,.cr-structure-cons ul{margin:4px 0;padding-left:16px;font-size:12px}
+.cr-structure-pros li,.cr-structure-cons li{margin-bottom:2px}
+.cr-structure-tip{margin-top:8px;padding:8px;background:var(--gold-faint);border-left:3px solid var(--gold);font-size:11px;color:var(--gold)}
+
+/* 税务优化 */
+.cr-tax-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.cr-tax-item{background:var(--paper);border:1px solid var(--line);padding:12px}
+.cr-tax-item h4{font-family:var(--serif);font-size:13px;color:var(--navy-deep);margin-bottom:6px}
+.cr-tax-item p{font-size:12px;color:var(--ink-2);margin-bottom:8px;line-height:1.7}
+.cr-tax-saving{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600}
+
+/* 案例库 */
+.cr-case-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cr-case-card{background:var(--paper);border:1px solid var(--line);padding:16px}
+.cr-case-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cr-case-header h4{font-family:var(--serif);font-size:13px;color:var(--navy-deep);margin:0;flex:1}
+.cr-case-summary{font-size:12px;color:var(--ink);line-height:1.7;margin-bottom:10px;padding:8px;background:var(--paper-3);border-left:3px solid var(--line)}
+.cr-case-lesson{font-size:12px;color:var(--navy);margin-bottom:6px}
+.cr-case-mba{font-size:12px;color:var(--gold);font-style:italic;padding:8px;background:var(--gold-faint)}
+
+/* 案例统计 */
+.cr-case-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cr-case-stat{text-align:center;padding:16px;background:var(--paper);border:1px solid var(--line)}
+.cr-case-stat.red{border-top:3px solid var(--red)}
+.cr-case-stat.green{border-top:3px solid var(--green)}
+.cr-case-stat-value{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--navy-deep);margin-bottom:4px}
+.cr-case-stat-label{font-size:11px;color:var(--ink-3)}
 
 /* ============ 打印导出：一页简报（隐藏导航与交互件，保留报表配色） ============ */
 @media print{
